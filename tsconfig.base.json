@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "es2025",
+    "lib": ["ESNext", "DOM", "DOM.AsyncIterable"],
+    "moduleDetection": "force",
+
+    "module": "esnext",
+    "moduleResolution": "bundler",
+
+    "rewriteRelativeImportExtensions": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["node", "bun", "deno"],
+
+    "resolveJsonModule": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["dist"]
+}

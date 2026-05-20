@@ -1,0 +1,68 @@
+{
+  "name": "@tunnckocore/hbs",
+  "version": "0.1.0",
+  "description": "HBS is compact, clean, efficient encoding format for JSON flat object KV pairs with integrity and checksum verification, lossy types, and preserving size as much as possible.",
+  "homepage": "https://github.com/tunnckoCore/hbs-encoding",
+  "bugs": {
+    "url": "https://github.com/tunnckoCore/hbs-encoding/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "tunnckoCore",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tunnckoCore/hbs-encoding.git"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./node": {
+        "types": "./dist/node.d.mts",
+        "import": "./dist/node.mjs"
+      },
+      "./package.json": "./package.json"
+    },
+    "main": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "provenance": false,
+    "tag": "latest",
+    "types": "./dist/index.d.mts",
+    "typings": "./dist/index.d.mts"
+  },
+  "scripts": {
+    "prepublishOnly": "vp run build",
+    "prepare": "vp config"
+  },
+  "dependencies": {
+    "@noble/hashes": "2.2.0",
+    "canonical-json": "0.4.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "@types/deno": "^2.7.0",
+    "@types/node": "^24",
+    "bumpp": "^11.1.0",
+    "typescript": "^6.0.3",
+    "vite-plus": "^0.1.20"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  },
+  "packageManager": "pnpm@11.1.3"
+}
