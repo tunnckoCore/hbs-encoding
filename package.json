@@ -1,6 +1,6 @@
 {
   "name": "@tunnckocore/hbs",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "HBS is compact, clean, efficient encoding format for JSON flat object KV pairs with integrity and checksum verification, lossy types, and preserving size as much as possible.",
   "homepage": "https://github.com/tunnckoCore/hbs-encoding",
   "bugs": {
@@ -14,7 +14,8 @@
   },
   "files": [
     "src",
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "main": "./src/index.ts",
