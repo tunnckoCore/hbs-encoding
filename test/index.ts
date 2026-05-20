@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { keccak_512 } from "@noble/hashes/sha3.js";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -22,6 +24,7 @@ describe("hbs", () => {
     expect(HBS_INTEGRITY_SIZE).toBe(16);
     expect(HBS_CHECKSUM_SIZE).toBe(8);
     expect(DEFAULT_HBS_OPTIONS).toEqual({
+      digest: sha256,
       prefix: HBS_PREFIX,
       headerEndDelimiter: HBS_HEADER_END_DELIMITER,
       integritySize: HBS_INTEGRITY_SIZE,
@@ -218,7 +221,7 @@ describe("hbs", () => {
     expect(decoded?.checksum).toHaveLength(6);
   });
 
-  it("supports integritySize 0 as the full SHA-256 hex digest length", () => {
+  it("supports integritySize 0 as the full digest hex length", () => {
     const options = { integritySize: 0, checksumSize: 16 };
     const encoded = encodeHbs({ id: "8711" }, options);
     const decoded = decodeHbs(encoded, options);
@@ -227,6 +230,30 @@ describe("hbs", () => {
     expect(decoded?.valid).toBe(true);
     expect(decoded?.integrity).toHaveLength(64);
     expect(decoded?.checksum).toHaveLength(16);
+  });
+
+  it("supports custom synchronous digest functions", () => {
+    const options = { digest: keccak_512, integritySize: 0, checksumSize: 24 };
+    const encoded = encodeHbs({ id: "8711" }, options);
+    const decoded = decodeHbs(encoded, options);
+    const decodedWithDefaultDigest = decodeHbs(encoded, { integritySize: 0, checksumSize: 24 });
+
+    expect(encoded).toMatch(/^hbs2\.[a-f0-9]{128}\.10\./);
+    expect(decoded?.valid).toBe(true);
+    expect(decoded?.integrity).toHaveLength(128);
+    expect(decoded?.checksum).toHaveLength(24);
+    expect(decodedWithDefaultDigest?.valid).toBe(false);
+  });
+
+  it("throws on async digest functions", () => {
+    const digest = (() => Promise.resolve(new Uint8Array())) as never;
+
+    expect(() => encodeHbs({ id: "8711" }, { digest })).toThrow(
+      "Invalid HBS options: digest must be synchronous",
+    );
+    expect(() => decodeHbs(encodeHbs({ id: "8711" }), { digest })).toThrow(
+      "Invalid HBS options: digest must be synchronous",
+    );
   });
 
   it("throws on invalid HBS option sizes", () => {

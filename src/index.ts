@@ -8,6 +8,7 @@ import type {
   DecodeHbsPayloadResult,
   DecodeHbsResult,
   EncodeHbsOptions,
+  HbsDigest,
   HbsPayload,
 } from "./types.ts";
 // import { camelCaseObjectKeys, sortObjectKeys } from "@/lib/utils";
@@ -19,6 +20,7 @@ export const HBS_INTEGRITY_SIZE = 16;
 export const HBS_CHECKSUM_SIZE = 8; // or HBS_INTEGRITY_SIZE / 2
 
 export const DEFAULT_HBS_OPTIONS = {
+  digest: sha256,
   prefix: HBS_PREFIX,
   headerEndDelimiter: HBS_HEADER_END_DELIMITER,
   integritySize: HBS_INTEGRITY_SIZE,
@@ -28,8 +30,18 @@ export const DEFAULT_HBS_OPTIONS = {
 export const DEFAULT_ENCODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
 export const DEFAULT_DECODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
 
-function normalizeHbsOptions(options: Required<EncodeHbsOptions>) {
-  const integritySize = options.integritySize === 0 ? 64 : options.integritySize;
+function digestPayload(payload: string, digest: HbsDigest) {
+  const result = digest(new TextEncoder().encode(payload));
+
+  if (result instanceof Promise) {
+    throw new Error("Invalid HBS options: digest must be synchronous");
+  }
+
+  return bytesToHex(result);
+}
+
+function normalizeHbsOptions(options: Required<EncodeHbsOptions>, digestHexSize: number) {
+  const integritySize = options.integritySize === 0 ? digestHexSize : options.integritySize;
 
   if (integritySize < 6) {
     throw new Error("Invalid HBS options: integritySize must be 0 or at least 6");
@@ -145,19 +157,23 @@ export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions
 }
 
 export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
-  const options = normalizeHbsOptions({ ...DEFAULT_ENCODE_HBS_OPTIONS, ...opts });
+  const options = { ...DEFAULT_ENCODE_HBS_OPTIONS, ...opts };
 
   const hbsPayload = encodeHbsPayload(payload);
   const encodedPayload = hbsPayload;
-  const sha = bytesToHex(sha256(new TextEncoder().encode(hbsPayload)));
+  const sha = digestPayload(hbsPayload, options.digest);
+  const normalizedOptions = normalizeHbsOptions(options, sha.length);
 
   const HBS_ENVELOPE = `
-    ${options.prefix}.
-    ${sha.slice(0, options.integritySize)}.
-    ${encodedPayload.length}${options.headerEndDelimiter}
+    ${normalizedOptions.prefix}.
+    ${sha.slice(0, normalizedOptions.integritySize)}.
+    ${encodedPayload.length}${normalizedOptions.headerEndDelimiter}
 
     ${encodedPayload}.
-    ${sha.slice(options.integritySize - options.checksumSize, options.integritySize)}
+    ${sha.slice(
+      normalizedOptions.integritySize - normalizedOptions.checksumSize,
+      normalizedOptions.integritySize,
+    )}
   `
     .split("\n")
     .map((x) => x.trim())
@@ -167,7 +183,7 @@ export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
 }
 
 export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbsResult | null {
-  const options = normalizeHbsOptions({ ...DEFAULT_DECODE_HBS_OPTIONS, ...opts });
+  const options = { ...DEFAULT_DECODE_HBS_OPTIONS, ...opts };
   const start = input.indexOf(`${options.prefix}.`);
 
   if (start === -1) {
@@ -203,12 +219,16 @@ export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbs
   const checksumStart = payloadStart + expectedLength + HBS_HEADER_END_DELIMITER.length;
   const checksum = frame.slice(checksumStart, checksumStart + options.checksumSize);
   const decodedPayload = decodeHbsPayload(payload, { partial: true });
-  const sha = bytesToHex(sha256(new TextEncoder().encode(payload)));
+  const sha = digestPayload(payload, options.digest);
+  const normalizedOptions = normalizeHbsOptions(options, sha.length);
   const valid =
     encodedPayload.length === expectedLength &&
     !decodedPayload.truncated &&
-    sha.slice(0, options.integritySize) === integrity &&
-    sha.slice(options.integritySize - options.checksumSize, options.integritySize) === checksum;
+    sha.slice(0, normalizedOptions.integritySize) === integrity &&
+    sha.slice(
+      normalizedOptions.integritySize - normalizedOptions.checksumSize,
+      normalizedOptions.integritySize,
+    ) === checksum;
 
   return {
     prefix: options.prefix,
