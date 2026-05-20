@@ -1,6 +1,6 @@
 {
   "name": "@tunnckocore/hbs",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "HBS is compact, clean, efficient encoding format for JSON flat object KV pairs with integrity and checksum verification, lossy types, and preserving size as much as possible.",
   "homepage": "https://github.com/tunnckoCore/hbs-encoding",
   "bugs": {
@@ -29,21 +29,21 @@
     "access": "public",
     "exports": {
       ".": {
-        "types": "./dist/index.d.mts",
-        "import": "./dist/index.mjs"
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
       },
       "./node": {
-        "types": "./dist/node.d.mts",
-        "import": "./dist/node.mjs"
+        "types": "./dist/node.d.ts",
+        "import": "./dist/node.js"
       },
       "./package.json": "./package.json"
     },
-    "main": "./dist/index.mjs",
-    "module": "./dist/index.mjs",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
     "provenance": false,
     "tag": "latest",
-    "types": "./dist/index.d.mts",
-    "typings": "./dist/index.d.mts"
+    "types": "./dist/index.d.ts",
+    "typings": "./dist/index.d.ts"
   },
   "scripts": {
     "prepublishOnly": "vp run build",
@@ -54,10 +54,12 @@
     "canonical-json": "0.4.0"
   },
   "devDependencies": {
+    "@ipld/dag-cbor": "^10.0.1",
     "@types/bun": "^1.3.14",
     "@types/deno": "^2.7.0",
     "@types/node": "^24",
     "bumpp": "^11.1.0",
+    "multiformats": "^14.0.0",
     "typescript": "^6.0.3",
     "vite-plus": "^0.1.20"
   },
