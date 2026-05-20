@@ -1,5 +1,7 @@
 # @tunnckocore/hbs
 
+[![npm version badge](https://badgen.net/npm/v/@tunnckocore/hbs)](https://npmjs.com/package/@tunnckocore/hbs "npm version") ![package license](https://badgen.net/npm/license/@tunnckocore/hbs) ![libera manifesto](https://badgen.net/badge/libera/manifesto/grey)
+
 Compact, deterministic HBS (`hbs2`) encoding for flat JSON-like key/value payloads, with length framing plus SHA-256 based integrity and checksum verification.
 
 HBS is useful when you need a small, readable envelope for metadata-like objects and want decoders to detect truncation or tampering.
@@ -8,6 +10,7 @@ HBS is useful when you need a small, readable envelope for metadata-like objects
 
 - Encodes flat object key/value pairs into a compact length-prefixed payload
 - Deterministic output via [JSON Canonicalization Scheme (JCS, RFC 8785)](https://www.rfc-editor.org/rfc/rfc8785) key ordering
+- Preserves the original input data size closely, no expansion like Base64 (33%) or Bech32
 - Integrity prefix and trailing checksum derived from SHA-256
 - Decoder reports validity, truncation, expected length, and actual length
 - Can decode HBS strings embedded inside larger text
