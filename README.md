@@ -95,6 +95,12 @@ Encodes a flat payload into an HBS envelope.
 encodeHbs({ id: "8711", is_unique: true });
 ```
 
+Supported input values are:
+
+```ts
+type HbsPayload = Record<string, string | number | null | boolean>;
+```
+
 Custom options may be used to change the prefix, digest, integrity size, checksum size, or header delimiter:
 
 ```ts
@@ -112,12 +118,6 @@ const encoded = encodeHbs(
 ```
 
 See [Options](#options) for validation rules and defaults.
-
-Supported input values are:
-
-```ts
-type HbsPayload = Record<string, string | number | null | boolean>;
-```
 
 ### `decodeHbs(input, options?)`
 
@@ -151,6 +151,54 @@ type DecodeHbsResult = {
 ```
 
 Check `result.valid` before trusting the decoded payload.
+
+### `encodeHbsPayload(payload)`
+
+Encodes only the raw length-prefixed payload, without the HBS envelope or integrity fields. Keys are canonicalized before length-prefix encoding, so non-ordered input produces ordered output.
+
+```ts
+encodeHbsPayload({
+  owner: "0x4212D149F77308a87ce9928F1095eDdb894f4D6810",
+  id: "4e51fe43-e025-4c55-a788-8fecc1f95753",
+  media_type: "image",
+});
+
+// => 2:id36:4e51fe43-e025-4c55-a788-8fecc1f9575310:media_type5:image5:owner44:0x4212D149F77308a87ce9928F1095eDdb894f4D6810
+```
+
+### `decodeHbsPayload(input, options?)`
+
+Decodes a raw length-prefixed payload. Notice that it returns the canonical ordered keys.
+
+```ts
+decodeHbsPayload(
+  "2:id36:4e51fe43-e025-4c55-a788-8fecc1f9575310:media_type5:image5:owner44:0x4212D149F77308a87ce9928F1095eDdb894f4D6810",
+);
+
+// canonical ordered keys
+// => {
+//   id: "4e51fe43-e025-4c55-a788-8fecc1f95753",
+//   media_type: "image",
+//   owner: "0x4212D149F77308a87ce9928F1095eDdb894f4D6810",
+// }
+```
+
+Use partial mode to avoid throwing on truncated input:
+
+```ts
+decodeHbsPayload(
+  // not full/correct owner address
+  "2:id36:4e51fe43-e025-4c55-a788-8fecc1f9575310:media_type5:image5:owner44:0x4212",
+  { partial: true },
+);
+// => {
+//   payload: {
+//     id: "4e51fe43-e025-4c55-a788-8fecc1f95753",
+//     media_type: "image",
+//   },
+//   truncated: true,
+// }
+```
 
 ## Options
 
@@ -239,54 +287,6 @@ const decoded = decodeHbs(encoded, { headerEndDelimiter: "|" });
 ```
 
 The separator before the trailing checksum is always `.`.
-
-### `encodeHbsPayload(payload)`
-
-Encodes only the raw length-prefixed payload, without the HBS envelope or integrity fields. Keys are canonicalized before length-prefix encoding, so non-ordered input produces ordered output.
-
-```ts
-encodeHbsPayload({
-  owner: "0x4212D149F77308a87ce9928F1095eDdb894f4D6810",
-  id: "4e51fe43-e025-4c55-a788-8fecc1f95753",
-  media_type: "image",
-});
-
-// => 2:id36:4e51fe43-e025-4c55-a788-8fecc1f9575310:media_type5:image5:owner44:0x4212D149F77308a87ce9928F1095eDdb894f4D6810
-```
-
-### `decodeHbsPayload(input, options?)`
-
-Decodes a raw length-prefixed payload. Notice that it returns the canonical ordered keys.
-
-```ts
-decodeHbsPayload(
-  "2:id36:4e51fe43-e025-4c55-a788-8fecc1f9575310:media_type5:image5:owner44:0x4212D149F77308a87ce9928F1095eDdb894f4D6810",
-);
-
-// canonical ordered keys
-// => {
-//   id: "4e51fe43-e025-4c55-a788-8fecc1f95753",
-//   media_type: "image",
-//   owner: "0x4212D149F77308a87ce9928F1095eDdb894f4D6810",
-// }
-```
-
-Use partial mode to avoid throwing on truncated input:
-
-```ts
-decodeHbsPayload(
-  // not full/correct owner address
-  "2:id36:4e51fe43-e025-4c55-a788-8fecc1f9575310:media_type5:image5:owner44:0x4212",
-  { partial: true },
-);
-// => {
-//   payload: {
-//     id: "4e51fe43-e025-4c55-a788-8fecc1f95753",
-//     media_type: "image",
-//   },
-//   truncated: true,
-// }
-```
 
 ## Development
 
