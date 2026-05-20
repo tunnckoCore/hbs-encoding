@@ -28,6 +28,22 @@ export const DEFAULT_HBS_OPTIONS = {
 export const DEFAULT_ENCODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
 export const DEFAULT_DECODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
 
+function normalizeHbsOptions(options: Required<EncodeHbsOptions>) {
+  const integritySize = options.integritySize === 0 ? 64 : options.integritySize;
+
+  if (integritySize < 6) {
+    throw new Error("Invalid HBS options: integritySize must be 0 or at least 6");
+  }
+
+  if (options.checksumSize > integritySize) {
+    throw new Error(
+      "Invalid HBS options: checksumSize must be less than or equal to integritySize",
+    );
+  }
+
+  return { ...options, integritySize };
+}
+
 // TODO: support nested objects?
 export function encodeHbsPayload(payload: HbsPayload) {
   const canonicalData = JSON.parse(canonicalJsonStringify(payload) ?? "null");
@@ -129,7 +145,7 @@ export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions
 }
 
 export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
-  const options = { ...DEFAULT_ENCODE_HBS_OPTIONS, ...opts };
+  const options = normalizeHbsOptions({ ...DEFAULT_ENCODE_HBS_OPTIONS, ...opts });
 
   const hbsPayload = encodeHbsPayload(payload);
   const encodedPayload = hbsPayload;
@@ -151,7 +167,7 @@ export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
 }
 
 export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbsResult | null {
-  const options = { ...DEFAULT_DECODE_HBS_OPTIONS, ...opts };
+  const options = normalizeHbsOptions({ ...DEFAULT_DECODE_HBS_OPTIONS, ...opts });
   const start = input.indexOf(`${options.prefix}.`);
 
   if (start === -1) {

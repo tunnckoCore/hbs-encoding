@@ -218,6 +218,32 @@ describe("hbs", () => {
     expect(decoded?.checksum).toHaveLength(6);
   });
 
+  it("supports integritySize 0 as the full SHA-256 hex digest length", () => {
+    const options = { integritySize: 0, checksumSize: 16 };
+    const encoded = encodeHbs({ id: "8711" }, options);
+    const decoded = decodeHbs(encoded, options);
+
+    expect(encoded).toMatch(/^hbs2\.[a-f0-9]{64}\.10\./);
+    expect(decoded?.valid).toBe(true);
+    expect(decoded?.integrity).toHaveLength(64);
+    expect(decoded?.checksum).toHaveLength(16);
+  });
+
+  it("throws on invalid HBS option sizes", () => {
+    expect(() => encodeHbs({ id: "8711" }, { integritySize: 5 })).toThrow(
+      "Invalid HBS options: integritySize must be 0 or at least 6",
+    );
+    expect(() => decodeHbs("hbs2.deadbeef.0..", { integritySize: 5 })).toThrow(
+      "Invalid HBS options: integritySize must be 0 or at least 6",
+    );
+    expect(() => encodeHbs({ id: "8711" }, { integritySize: 6, checksumSize: 8 })).toThrow(
+      "Invalid HBS options: checksumSize must be less than or equal to integritySize",
+    );
+    expect(() => decodeHbs("hbs2.deadbeef.0..", { integritySize: 6, checksumSize: 8 })).toThrow(
+      "Invalid HBS options: checksumSize must be less than or equal to integritySize",
+    );
+  });
+
   it("supports a custom header end delimiter", () => {
     const options = { headerEndDelimiter: "|" };
     const encoded = encodeHbs({ id: "8711" }, options);
