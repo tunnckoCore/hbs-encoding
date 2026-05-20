@@ -13,12 +13,30 @@ import type {
 } from "./types.ts";
 // import { camelCaseObjectKeys, sortObjectKeys } from "@/lib/utils";
 
+/**
+ * Default HBS envelope prefix.
+ */
 export const HBS_PREFIX = "hbs2";
+/**
+ * Conventional metadata key used for flattened traits.
+ */
 export const HBS_METADATA_TRAITS_KEY = "traits";
+/**
+ * Default delimiter between the HBS header and payload.
+ */
 export const HBS_HEADER_END_DELIMITER = ".";
+/**
+ * Default number of digest hex characters stored in the header.
+ */
 export const HBS_INTEGRITY_SIZE = 16;
+/**
+ * Default number of digest hex characters stored after the payload.
+ */
 export const HBS_CHECKSUM_SIZE = 8; // or HBS_INTEGRITY_SIZE / 2
 
+/**
+ * Default options shared by HBS encoding and decoding.
+ */
 export const DEFAULT_HBS_OPTIONS = {
   digest: sha256,
   prefix: HBS_PREFIX,
@@ -27,7 +45,13 @@ export const DEFAULT_HBS_OPTIONS = {
   checksumSize: HBS_CHECKSUM_SIZE,
 } as const;
 
+/**
+ * Default options used by `encodeHbs`.
+ */
 export const DEFAULT_ENCODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
+/**
+ * Default options used by `decodeHbs`.
+ */
 export const DEFAULT_DECODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
 
 function digestPayload(payload: string, digest: HbsDigest) {
@@ -57,6 +81,12 @@ function normalizeHbsOptions(options: Required<EncodeHbsOptions>, digestHexSize:
 }
 
 // TODO: support nested objects?
+/**
+ * Encodes a flat payload into raw HBS length-prefixed key/value pairs.
+ *
+ * @param payload - Flat payload to encode.
+ * @returns Raw length-prefixed HBS payload.
+ */
 export function encodeHbsPayload(payload: HbsPayload) {
   const canonicalData = JSON.parse(canonicalJsonStringify(payload) ?? "null");
   if (!canonicalData) {
@@ -73,10 +103,24 @@ export function encodeHbsPayload(payload: HbsPayload) {
   return output;
 }
 
+/**
+ * Decodes raw HBS length-prefixed key/value pairs with partial recovery.
+ *
+ * @param input - Raw length-prefixed HBS payload.
+ * @param options - Payload decoding options.
+ * @returns Partial payload decoding result.
+ */
 export function decodeHbsPayload(
   input: string,
   options: DecodeHbsPayloadOptions & { partial: true },
 ): DecodeHbsPayloadResult;
+/**
+ * Decodes raw HBS length-prefixed key/value pairs.
+ *
+ * @param input - Raw length-prefixed HBS payload.
+ * @param options - Payload decoding options.
+ * @returns Decoded HBS payload.
+ */
 export function decodeHbsPayload(input: string, options?: DecodeHbsPayloadOptions): HbsPayload;
 export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions = {}) {
   const payload: HbsPayload = {};
@@ -156,6 +200,13 @@ export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions
   return finish();
 }
 
+/**
+ * Encodes a flat payload into an HBS envelope.
+ *
+ * @param payload - Flat payload to encode.
+ * @param opts - HBS encoding options.
+ * @returns Encoded HBS envelope.
+ */
 export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
   const options = { ...DEFAULT_ENCODE_HBS_OPTIONS, ...opts };
 
@@ -182,6 +233,13 @@ export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
   return HBS_ENVELOPE;
 }
 
+/**
+ * Decodes the first HBS envelope found in an input string.
+ *
+ * @param input - Input string that may contain an HBS envelope.
+ * @param opts - HBS decoding options.
+ * @returns HBS decoding result, or null when no valid-looking envelope is found.
+ */
 export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbsResult | null {
   const options = { ...DEFAULT_DECODE_HBS_OPTIONS, ...opts };
   const start = input.indexOf(`${options.prefix}.`);
