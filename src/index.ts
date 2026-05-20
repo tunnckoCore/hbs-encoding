@@ -3,11 +3,13 @@ import { bytesToHex } from "@noble/hashes/utils.js";
 import canonicalJsonStringify from "canonical-json";
 
 import type {
+  DecodeHbsOptions,
   DecodeHbsPayloadOptions,
   DecodeHbsPayloadResult,
   DecodeHbsResult,
+  EncodeHbsOptions,
   HbsPayload,
-} from "./types";
+} from "./types.ts";
 // import { camelCaseObjectKeys, sortObjectKeys } from "@/lib/utils";
 
 export const HBS_PREFIX = "hbs2";
@@ -15,6 +17,16 @@ export const HBS_METADATA_TRAITS_KEY = "traits";
 export const HBS_HEADER_END_DELIMITER = ".";
 export const HBS_INTEGRITY_SIZE = 16;
 export const HBS_CHECKSUM_SIZE = 8; // or HBS_INTEGRITY_SIZE / 2
+
+export const DEFAULT_HBS_OPTIONS = {
+  prefix: HBS_PREFIX,
+  headerEndDelimiter: HBS_HEADER_END_DELIMITER,
+  integritySize: HBS_INTEGRITY_SIZE,
+  checksumSize: HBS_CHECKSUM_SIZE,
+} as const;
+
+export const DEFAULT_ENCODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
+export const DEFAULT_DECODE_HBS_OPTIONS = DEFAULT_HBS_OPTIONS;
 
 // TODO: support nested objects?
 export function encodeHbsPayload(payload: HbsPayload) {
@@ -26,7 +38,8 @@ export function encodeHbsPayload(payload: HbsPayload) {
   let output = "";
 
   for (const [key, value] of Object.entries(canonicalData)) {
-    output += `${key.length}:${key}${String(value).length}:${value}`;
+    const stringValue = String(value);
+    output += `${key.length}:${key}${stringValue.length}:${stringValue}`;
   }
 
   return output;
@@ -115,18 +128,20 @@ export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions
   return finish();
 }
 
-export function encodeHbs(payload: HbsPayload) {
+export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
+  const options = { ...DEFAULT_ENCODE_HBS_OPTIONS, ...opts };
+
   const hbsPayload = encodeHbsPayload(payload);
   const encodedPayload = hbsPayload;
   const sha = bytesToHex(sha256(new TextEncoder().encode(hbsPayload)));
 
   const HBS_ENVELOPE = `
-    ${HBS_PREFIX}.
-    ${sha.slice(0, HBS_INTEGRITY_SIZE)}.
-    ${encodedPayload.length}${HBS_HEADER_END_DELIMITER}
+    ${options.prefix}.
+    ${sha.slice(0, options.integritySize)}.
+    ${encodedPayload.length}${options.headerEndDelimiter}
 
     ${encodedPayload}.
-    ${sha.slice(HBS_INTEGRITY_SIZE - HBS_CHECKSUM_SIZE, HBS_INTEGRITY_SIZE)}
+    ${sha.slice(options.integritySize - options.checksumSize, options.integritySize)}
   `
     .split("\n")
     .map((x) => x.trim())
@@ -135,43 +150,52 @@ export function encodeHbs(payload: HbsPayload) {
   return HBS_ENVELOPE;
 }
 
-export function decodeHbs(input: string): DecodeHbsResult | null {
-  const start = input.indexOf(`${HBS_PREFIX}.`);
+export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbsResult | null {
+  const options = { ...DEFAULT_DECODE_HBS_OPTIONS, ...opts };
+  const start = input.indexOf(`${options.prefix}.`);
 
   if (start === -1) {
     return null;
   }
 
   const frame = input.slice(start);
-  const parts = frame.split(".");
-  const prefix = parts[0];
-  const integrity = parts[1];
-  const lengthText = parts[2];
+  const prefixEnd = options.prefix.length;
+  const integrityStart = prefixEnd + 1;
+  const integrityEnd = frame.indexOf(".", integrityStart);
 
-  if (prefix !== HBS_PREFIX || !integrity || !lengthText) {
+  if (integrityEnd === -1) {
     return null;
   }
 
+  const integrity = frame.slice(integrityStart, integrityEnd);
+  const lengthStart = integrityEnd + 1;
+  const lengthEnd = frame.indexOf(options.headerEndDelimiter, lengthStart);
+
+  if (!integrity || lengthEnd === -1) {
+    return null;
+  }
+
+  const lengthText = frame.slice(lengthStart, lengthEnd);
   const expectedLength = Number.parseInt(lengthText, 10);
   if (!Number.isFinite(expectedLength) || expectedLength < 0) {
     return null;
   }
 
-  const payloadStart = `${HBS_PREFIX}.${integrity}.${lengthText}${HBS_HEADER_END_DELIMITER}`.length;
+  const payloadStart = lengthEnd + options.headerEndDelimiter.length;
   const encodedPayload = frame.slice(payloadStart, payloadStart + expectedLength);
   const payload = encodedPayload;
-  const checksumStart = payloadStart + expectedLength + 1;
-  const checksum = frame.slice(checksumStart, checksumStart + HBS_CHECKSUM_SIZE);
+  const checksumStart = payloadStart + expectedLength + HBS_HEADER_END_DELIMITER.length;
+  const checksum = frame.slice(checksumStart, checksumStart + options.checksumSize);
   const decodedPayload = decodeHbsPayload(payload, { partial: true });
   const sha = bytesToHex(sha256(new TextEncoder().encode(payload)));
   const valid =
     encodedPayload.length === expectedLength &&
     !decodedPayload.truncated &&
-    sha.slice(0, HBS_INTEGRITY_SIZE) === integrity &&
-    sha.slice(HBS_INTEGRITY_SIZE - HBS_CHECKSUM_SIZE, HBS_INTEGRITY_SIZE) === checksum;
+    sha.slice(0, options.integritySize) === integrity &&
+    sha.slice(options.integritySize - options.checksumSize, options.integritySize) === checksum;
 
   return {
-    prefix: HBS_PREFIX,
+    prefix: options.prefix,
     valid,
     truncated: decodedPayload.truncated || encodedPayload.length < expectedLength,
     integrity: integrity,
@@ -182,3 +206,6 @@ export function decodeHbs(input: string): DecodeHbsResult | null {
     input: frame,
   };
 }
+
+export { attributesToTraits } from "./attrs.ts";
+export type * from "./types.ts";

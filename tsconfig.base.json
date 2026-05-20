@@ -15,6 +15,9 @@
     "declarationMap": true,
     "types": ["node", "bun", "deno"],
 
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "resolveJsonModule": true,
     "strict": true,
     "noUnusedLocals": true,

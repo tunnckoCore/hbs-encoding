@@ -1,4 +1,4 @@
-import type { Prettify } from "./types";
+import type { Prettify } from "./types.ts";
 
 type HbsAttribute = Prettify<
   | {

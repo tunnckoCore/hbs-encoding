@@ -3,6 +3,15 @@ export type Prettify<T> = {
 } & {};
 export type HbsPayload = Record<string, string | number | null | boolean>;
 
+export type EncodeHbsOptions = {
+  prefix?: string;
+  headerEndDelimiter?: string;
+  integritySize?: number;
+  checksumSize?: number;
+};
+
+export type DecodeHbsOptions = EncodeHbsOptions;
+
 export type DecodeHbsPayloadOptions = {
   partial?: boolean;
 };
@@ -13,7 +22,7 @@ export type DecodeHbsPayloadResult = {
 };
 
 export type DecodeHbsResult = {
-  prefix: "hbs2";
+  prefix: string;
   valid: boolean;
   truncated: boolean;
   integrity: string;
