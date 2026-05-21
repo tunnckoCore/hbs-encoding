@@ -1,19 +1,4 @@
-import type { Prettify } from "./types.ts";
-
-type HbsAttribute = Prettify<
-  | {
-      trait_type: string;
-      value: string | number;
-    }
-  | {
-      trait_type: string;
-      trait_value: string | number;
-    }
-  | {
-      traitType: string;
-      traitValue: string | number;
-    }
->;
+import type { HbsAttribute } from "./types.ts";
 
 function getAttributeKey(attribute: HbsAttribute) {
   if ("trait_type" in attribute) {

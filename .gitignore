@@ -15,3 +15,7 @@ node_modules
 
 *.log
 .DS_Store
+*.png
+*.jpeg
+*.jpg
+*.webp

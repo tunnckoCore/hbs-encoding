@@ -1,6 +1,6 @@
 {
   "name": "@tunnckocore/hbs",
-  "version": "0.3.1",
+  "version": "0.5.1",
   "description": "HBS is compact, clean, efficient encoding format for JSON flat object KV pairs with integrity and checksum verification, lossy types, and preserving size as much as possible.",
   "homepage": "https://github.com/tunnckoCore/hbs-encoding",
   "bugs": {
@@ -23,6 +23,23 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./img": "./src/img/index.ts",
+    "./bitmaps/highscript": {
+      "types": "./src/bitmaps/highscript.d.ts",
+      "import": "./src/bitmaps/highscript.ts"
+    },
+    "./bitmaps/highscript.js": {
+      "types": "./src/bitmaps/highscript.d.ts",
+      "import": "./src/bitmaps/highscript.ts"
+    },
+    "./bitmaps/lowscript": {
+      "types": "./src/bitmaps/lowscript.d.ts",
+      "import": "./src/bitmaps/lowscript.ts"
+    },
+    "./bitmaps/lowscript.js": {
+      "types": "./src/bitmaps/lowscript.d.ts",
+      "import": "./src/bitmaps/lowscript.ts"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -32,9 +49,29 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       },
-      "./node": {
-        "types": "./dist/node.d.ts",
-        "import": "./dist/node.js"
+      "./img": {
+        "types": "./dist/img/index.d.ts",
+        "import": "./dist/img/index.js"
+      },
+      "./utils": {
+        "types": "./dist/utils.d.ts",
+        "import": "./dist/utils.js"
+      },
+      "./bitmaps/highscript": {
+        "types": "./dist/bitmaps/highscript.d.ts",
+        "import": "./dist/bitmaps/highscript.ts"
+      },
+      "./bitmaps/highscript.js": {
+        "types": "./dist/bitmaps/highscript.d.ts",
+        "import": "./dist/bitmaps/highscript.ts"
+      },
+      "./bitmaps/lowscript": {
+        "types": "./dist/bitmaps/lowscript.d.ts",
+        "import": "./dist/bitmaps/lowscript.ts"
+      },
+      "./bitmaps/lowscript.js": {
+        "types": "./dist/bitmaps/lowscript.d.ts",
+        "import": "./dist/bitmaps/lowscript.ts"
       },
       "./package.json": "./package.json"
     },
@@ -60,8 +97,12 @@
     "@types/node": "^24",
     "bumpp": "^11.1.0",
     "multiformats": "^14.0.0",
+    "sharp": "^0.34.5",
     "typescript": "^6.0.3",
     "vite-plus": "^0.1.20"
+  },
+  "peerDependencies": {
+    "sharp": "^0.34.5"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",

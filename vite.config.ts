@@ -33,7 +33,7 @@ export default defineConfig({
     exclude: ["**/dist/**", "**/node_modules/**", "**/src/**/*.test.ts"],
   },
   fmt: {
-    printWidth: 100,
+    printWidth: 80,
     ignorePatterns: ignores,
   },
   lint: {

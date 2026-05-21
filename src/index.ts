@@ -64,11 +64,17 @@ function digestPayload(payload: string, digest: HbsDigest) {
   return bytesToHex(result);
 }
 
-function normalizeHbsOptions(options: Required<EncodeHbsOptions>, digestHexSize: number) {
-  const integritySize = options.integritySize === 0 ? digestHexSize : options.integritySize;
+function normalizeHbsOptions(
+  options: Required<EncodeHbsOptions>,
+  digestHexSize: number,
+) {
+  const integritySize =
+    options.integritySize === 0 ? digestHexSize : options.integritySize;
 
   if (integritySize < 6) {
-    throw new Error("Invalid HBS options: integritySize must be 0 or at least 6");
+    throw new Error(
+      "Invalid HBS options: integritySize must be 0 or at least 6",
+    );
   }
 
   if (options.checksumSize > integritySize) {
@@ -85,12 +91,17 @@ function normalizeHbsOptions(options: Required<EncodeHbsOptions>, digestHexSize:
  * Encodes a flat payload into raw HBS length-prefixed key/value pairs.
  *
  * @param payload - Flat payload to encode.
+ * @param json - Use regular JSON as payload.
  * @returns Raw length-prefixed HBS payload.
  */
-export function encodeHbsPayload(payload: HbsPayload) {
-  const canonicalData = JSON.parse(canonicalJsonStringify(payload) ?? "null");
+export function encodeHbsPayload(payload: HbsPayload, json = false) {
+  const canonical = canonicalJsonStringify(payload);
+  if (json) {
+    return canonical ?? "null";
+  }
+  const canonicalData = JSON.parse(canonical ?? "null");
   if (!canonicalData) {
-    return "";
+    return "null";
   }
 
   let output = "";
@@ -121,8 +132,14 @@ export function decodeHbsPayload(
  * @param options - Payload decoding options.
  * @returns Decoded HBS payload.
  */
-export function decodeHbsPayload(input: string, options?: DecodeHbsPayloadOptions): HbsPayload;
-export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions = {}) {
+export function decodeHbsPayload(
+  input: string,
+  options?: DecodeHbsPayloadOptions,
+): HbsPayload;
+export function decodeHbsPayload(
+  input: string,
+  options: DecodeHbsPayloadOptions = {},
+) {
   const payload: HbsPayload = {};
   let offset = 0;
   let truncated = false;
@@ -174,7 +191,10 @@ export function decodeHbsPayload(input: string, options: DecodeHbsPayloadOptions
       throw new Error("Invalid HBS payload: missing value length separator");
     }
 
-    const valueLength = Number.parseInt(input.slice(keyEnd, valueLengthEnd), 10);
+    const valueLength = Number.parseInt(
+      input.slice(keyEnd, valueLengthEnd),
+      10,
+    );
     if (!Number.isFinite(valueLength) || valueLength < 0) {
       if (options.partial) {
         truncated = true;
@@ -240,7 +260,10 @@ export function encodeHbs(payload: HbsPayload, opts: EncodeHbsOptions = {}) {
  * @param opts - HBS decoding options.
  * @returns HBS decoding result, or null when no valid-looking envelope is found.
  */
-export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbsResult | null {
+export function decodeHbs(
+  input: string,
+  opts: DecodeHbsOptions = {},
+): DecodeHbsResult | null {
   const options = { ...DEFAULT_DECODE_HBS_OPTIONS, ...opts };
   const start = input.indexOf(`${options.prefix}.`);
 
@@ -272,10 +295,17 @@ export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbs
   }
 
   const payloadStart = lengthEnd + options.headerEndDelimiter.length;
-  const encodedPayload = frame.slice(payloadStart, payloadStart + expectedLength);
+  const encodedPayload = frame.slice(
+    payloadStart,
+    payloadStart + expectedLength,
+  );
   const payload = encodedPayload;
-  const checksumStart = payloadStart + expectedLength + HBS_HEADER_END_DELIMITER.length;
-  const checksum = frame.slice(checksumStart, checksumStart + options.checksumSize);
+  const checksumStart =
+    payloadStart + expectedLength + HBS_HEADER_END_DELIMITER.length;
+  const checksum = frame.slice(
+    checksumStart,
+    checksumStart + options.checksumSize,
+  );
   const decodedPayload = decodeHbsPayload(payload, { partial: true });
   const sha = digestPayload(payload, options.digest);
   const normalizedOptions = normalizeHbsOptions(options, sha.length);
@@ -291,7 +321,8 @@ export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbs
   return {
     prefix: options.prefix,
     valid,
-    truncated: decodedPayload.truncated || encodedPayload.length < expectedLength,
+    truncated:
+      decodedPayload.truncated || encodedPayload.length < expectedLength,
     integrity: integrity,
     checksum,
     expectedLength,
@@ -301,5 +332,5 @@ export function decodeHbs(input: string, opts: DecodeHbsOptions = {}): DecodeHbs
   };
 }
 
-export { attributesToTraits } from "./attrs.ts";
+export * from "./utils.ts";
 export type * from "./types.ts";

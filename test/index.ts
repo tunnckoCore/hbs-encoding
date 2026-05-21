@@ -69,8 +69,12 @@ describe("hbs", () => {
     expect(() => decodeHbsPayload("2id48711")).toThrow(
       "Invalid HBS payload: missing key length separator",
     );
-    expect(() => decodeHbsPayload("x:id4:8711")).toThrow("Invalid HBS payload: invalid key length");
-    expect(() => decodeHbsPayload("9:id")).toThrow("Invalid HBS payload: incomplete key");
+    expect(() => decodeHbsPayload("x:id4:8711")).toThrow(
+      "Invalid HBS payload: invalid key length",
+    );
+    expect(() => decodeHbsPayload("9:id")).toThrow(
+      "Invalid HBS payload: incomplete key",
+    );
     expect(() => decodeHbsPayload("2:id")).toThrow(
       "Invalid HBS payload: missing value length separator",
     );
@@ -83,7 +87,9 @@ describe("hbs", () => {
     expect(() => decodeHbsPayload("2:id-1:8711")).toThrow(
       "Invalid HBS payload: invalid value length",
     );
-    expect(() => decodeHbsPayload("2:id4:87")).toThrow("Invalid HBS payload: incomplete value");
+    expect(() => decodeHbsPayload("2:id4:87")).toThrow(
+      "Invalid HBS payload: incomplete value",
+    );
   });
 
   it("returns partial decoded payloads instead of throwing", () => {
@@ -119,7 +125,9 @@ describe("hbs", () => {
       payload: {},
       truncated: true,
     });
-    expect(decodeHbsPayload("2:id4:871110:media_type5:im", { partial: true })).toEqual({
+    expect(
+      decodeHbsPayload("2:id4:871110:media_type5:im", { partial: true }),
+    ).toEqual({
       payload: { id: "8711" },
       truncated: true,
     });
@@ -164,7 +172,9 @@ describe("hbs", () => {
 
   it("returns null for missing or invalid HBS envelope headers", () => {
     expect(decodeHbs("hello world")).toBeNull();
-    expect(decodeHbs("hbs2abcdef.10.payload.checksum", { prefix: "hbs2abcdef" })).toBeNull();
+    expect(
+      decodeHbs("hbs2abcdef.10.payload.checksum", { prefix: "hbs2abcdef" }),
+    ).toBeNull();
     expect(decodeHbs("hbs2.abcdef")).toBeNull();
     expect(decodeHbs("hbs2..10.payload.checksum")).toBeNull();
     expect(decodeHbs("hbs2.abcdefnot-a-lengthpayloadchecksum")).toBeNull();
@@ -192,7 +202,11 @@ describe("hbs", () => {
   });
 
   it("marks truncated envelopes as invalid and truncated", () => {
-    const encoded = encodeHbs({ id: "8711", media_type: "image", owner: "0x4212" });
+    const encoded = encodeHbs({
+      id: "8711",
+      media_type: "image",
+      owner: "0x4212",
+    });
     const truncated = encoded.slice(0, -12);
     const decoded = decodeHbs(truncated);
 
@@ -236,7 +250,10 @@ describe("hbs", () => {
     const options = { digest: keccak_512, integritySize: 0, checksumSize: 24 };
     const encoded = encodeHbs({ id: "8711" }, options);
     const decoded = decodeHbs(encoded, options);
-    const decodedWithDefaultDigest = decodeHbs(encoded, { integritySize: 0, checksumSize: 24 });
+    const decodedWithDefaultDigest = decodeHbs(encoded, {
+      integritySize: 0,
+      checksumSize: 24,
+    });
 
     expect(encoded).toMatch(/^hbs2\.[a-f0-9]{128}\.10\./);
     expect(decoded?.valid).toBe(true);
@@ -263,10 +280,14 @@ describe("hbs", () => {
     expect(() => decodeHbs("hbs2.deadbeef.0..", { integritySize: 5 })).toThrow(
       "Invalid HBS options: integritySize must be 0 or at least 6",
     );
-    expect(() => encodeHbs({ id: "8711" }, { integritySize: 6, checksumSize: 8 })).toThrow(
+    expect(() =>
+      encodeHbs({ id: "8711" }, { integritySize: 6, checksumSize: 8 }),
+    ).toThrow(
       "Invalid HBS options: checksumSize must be less than or equal to integritySize",
     );
-    expect(() => decodeHbs("hbs2.deadbeef.0..", { integritySize: 6, checksumSize: 8 })).toThrow(
+    expect(() =>
+      decodeHbs("hbs2.deadbeef.0..", { integritySize: 6, checksumSize: 8 }),
+    ).toThrow(
       "Invalid HBS options: checksumSize must be less than or equal to integritySize",
     );
   });
@@ -282,10 +303,15 @@ describe("hbs", () => {
   });
 
   it("uses matching decode options for validation", () => {
-    const encoded = encodeHbs({ id: "8711" }, { integritySize: 10, checksumSize: 4 });
+    const encoded = encodeHbs(
+      { id: "8711" },
+      { integritySize: 10, checksumSize: 4 },
+    );
 
     expect(decodeHbs(encoded)?.valid).toBe(false);
-    expect(decodeHbs(encoded, { integritySize: 10, checksumSize: 4 })?.valid).toBe(true);
+    expect(
+      decodeHbs(encoded, { integritySize: 10, checksumSize: 4 })?.valid,
+    ).toBe(true);
   });
 
   it("converts multiple attribute shapes to traits", () => {
